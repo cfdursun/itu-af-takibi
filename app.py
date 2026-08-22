@@ -105,9 +105,9 @@ def analyze_announcements_with_ai():
             GÖREV:
             7592 Sayılı Öğrenci Affı başvurularının BAŞLAYIP BAŞLAMADIĞINI belirle.
             
-            ÜSLUP VE KİŞİLİK (ÇOK ÖNEMLİ):
+            ÜSLUP VE KİŞİLİK (ÇOK ONEMLİ):
             - Çok samimi, esprili ve sokak ağzıyla eğlenceli bir Türkçe kullan.
-            - KESİNLİKLE "kanka", "kankam", "dostum", "bro" gibi kelimeleri KULLANMA.
+            - KESİNLİKLE "kanka", "kankam", "dostum", gibi kelimeleri KULLANMA.  "Kanki" diyebilirsin ara sıra.
             - Eğer BAŞLAMADIYSA: Abartılı ve komik yeminler et.
             - Eğer BAŞLADIYSA: Müjde verir gibi, aşırı heyecanlı ve panik/sevinç havasında yaz!
             - Yalnızca tek cümlelik, vurucu ve komik bir mesaj yaz.
