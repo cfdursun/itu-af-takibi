@@ -105,9 +105,9 @@ def analyze_announcements_with_ai():
             GÖREV:
             7592 Sayılı Öğrenci Affı başvurularının BAŞLAYIP BAŞLAMADIĞINI belirle.
             
-            ÜSLUP VE KİŞİLİK (ÇOK ONEMLİ):
+            ÜSLUP VE KİŞİLİK (ÇOK ÖNEMLİ):
             - Çok samimi, esprili ve sokak ağzıyla eğlenceli bir Türkçe kullan.
-            - KESİNLİKLE "kanka", "kankam", "dostum", gibi kelimeleri KULLANMA.  "Kanki" diyebilirsin ara sıra.
+            - KESİNLİKLE "kanka", "kankam", "dostum", "bro" gibi kelimeleri KULLANMA. "Kanki" diyebilirsin ara sıra.
             - Eğer BAŞLAMADIYSA: Abartılı ve komik yeminler et.
             - Eğer BAŞLADIYSA: Müjde verir gibi, aşırı heyecanlı ve panik/sevinç havasında yaz!
             - Yalnızca tek cümlelik, vurucu ve komik bir mesaj yaz.
@@ -133,7 +133,7 @@ def analyze_announcements_with_ai():
                 
                 site_state["started"] = is_started
                 site_state["message"] = result.get("ozet", "Af başvurusu henüz başlamamış.")
-                site_state["short_status"] = "Af başladı!" if is_started else f"Baktık, daha yok ({MODEL_NAME})"
+                site_state["short_status"] = "Af başladı!" if is_started else "Baktık, daha yok"
                 print(f"--> [BAŞARILI] Yanıt {MODEL_NAME} üzerinden alındı.")
 
             except Exception as err:
@@ -145,7 +145,6 @@ def analyze_announcements_with_ai():
 
             site_state["last_3"] = latest_3
             
-            # Türkiye saat dilimine (UTC+3) göre saati alma
             turkey_tz = pytz.timezone("Europe/Istanbul")
             site_state["last_checked"] = datetime.now(turkey_tz).strftime("%H:%M:%S")
 
