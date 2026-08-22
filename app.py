@@ -19,7 +19,7 @@ COOLDOWN_SECONDS = 15
 last_request_timestamp = 0
 last_request_user = None
 
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-3.5-flash-lite"
 
 NAV_BLACKLIST = [
     "öbs giriş", "itü anasayfa", "ninova", "program bilgi paketi", 
