@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, redirect, url_for, jsonify, session
 from bs4 import BeautifulSoup
 import requests
@@ -10,8 +11,9 @@ import uuid
 app = Flask(__name__)
 app.secret_key = "itu_af_takip_secret_key"
 
-GEMINI_API_KEY = "AQ.Ab8RN6KKiXUDYG3h839phK4tLeNqpljE2SyQ-H-mOfCcX-mZUg"
-client = genai.Client(api_key=GEMINI_API_KEY)
+# API Anahtarı doğrudan kodda durmaz, sunucudaki gizli değişkenden okunur
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 COOLDOWN_SECONDS = 15
 last_request_timestamp = 0
@@ -37,6 +39,12 @@ site_state = {
 def analyze_announcements_with_ai():
     global site_state, last_request_timestamp, last_request_user
     
+    if not client:
+        site_state["started"] = False
+        site_state["message"] = "API Anahtarı bulunamadı (GEMINI_API_KEY tanımlanmamış)."
+        site_state["short_status"] = "API Key Eksik"
+        return
+
     list_url = "https://www.sis.itu.edu.tr/TR/duyurular/duyurular.php"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
@@ -52,7 +60,6 @@ def analyze_announcements_with_ai():
             
             announcements = []
 
-            # 1. Öncelik: Gerçek duyuruların altındaki <font color="#ABA8A5"> etiketini eşleştir
             for li in soup.find_all("li"):
                 a_tag = li.find("a")
                 font_tag = li.find("font")
@@ -66,7 +73,6 @@ def analyze_announcements_with_ai():
                         if not any(a["title"] == text for a in announcements):
                             announcements.append({"title": text, "url": full_url})
 
-            # 2. Yedek Yöntem: Liste boş kalırsa blacklist temizliği ile ilk 3'ü al
             if not announcements:
                 for a_tag in soup.find_all("a", href=True):
                     text = a_tag.get_text().strip()
@@ -76,10 +82,8 @@ def analyze_announcements_with_ai():
                         if not any(a["title"] == text for a in announcements):
                             announcements.append({"title": text, "url": full_url})
 
-            # Birebir ana listedeki ilk 3 canlı duyuru
             latest_3 = announcements[:3]
             
-            # Af duyurusu detay taraması
             for item in announcements:
                 if any(kw in item["title"].lower() for kw in ["7592", "af", "geçici 85"]):
                     try:
@@ -104,7 +108,7 @@ def analyze_announcements_with_ai():
             - Çok samimi, esprili ve sokak ağzıyla eğlenceli bir Türkçe kullan.
             - KESİNLİKLE "kanka", "kankam", "dostum", "bro" gibi kelimeleri KULLANMA.
             - Eğer BAŞLAMADIYSA: Abartılı ve komik yeminler et. (Örn: "Vallah billah her yere baktım daha tık yok!", "İki tokenim önüme aksın ki af başvurusu başlamamış!", "Kuran çarpsın siteyi altüst ettim henüz başlamamış yeminle!").
-            - Eğer BAŞLADIYSA: Müjde verir gibi, aşırı heyecanlı ve panik/sevinç havasında yaz! (Örn: "MÜJDEEE! Vallahi başladı koşş çabuk başvur!", "Hadi gözün aydın af açıldı, durma koşşş!").
+            - Eğer BAŞLADIYSA: Müjde verir gibi, ashırı heyecanlı ve panik/sevinç havasında yaz! (Örn: "MÜJDEEE! Vallahi başladı koşş çabuk başvur!", "Hadi gözün aydın af açıldı, durma koşşş!").
             - Yalnızca tek cümlelik, vurucu ve komik bir mesaj yaz.
 
             Format:
