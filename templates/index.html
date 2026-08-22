@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İTÜ Af Takipçisi</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+            position: relative;
+        }
+        .meta-info {
+            text-align: left;
+            font-size: 0.78rem;
+            color: #64748b;
+            background-color: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 1.2rem;
+            border-left: 3px solid #94a3b8;
+        }
+        .warning-box {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: none;
+        }
+        .loading-box {
+            background-color: #e0f2fe;
+            border: 1px solid #0284c7;
+            color: #0369a1;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: none;
+        }
+        .status-badge {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+        }
+        .status-badge.red { background-color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+        .status-badge.green { background-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+        
+        .message {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.4;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn {
+            background-color: #0f172a;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover { background-color: #334155; }
+        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .table-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: left;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+        }
+
+        .announcements-list {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 1rem;
+        }
+
+        .announcements-list li {
+            font-size: 0.85rem;
+            padding: 8px 0;
+            border-bottom: 1px dashed #f1f5f9;
+        }
+
+        .announcements-list a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .announcements-list a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="meta-info" id="metaInfo">
+            <strong>Son sorgulama:</strong> {{ state.short_status }} (Saat {{ state.last_checked }})
+        </div>
+
+        <div class="loading-box" id="loadingBox">
+            🔍 Bakıp geliyorum bi sn...
+        </div>
+
+        <div class="warning-box" id="warningBox">
+            ⚠️ <span id="warningText">Lütfen bekleyin...</span>
+        </div>
+
+        <div class="status-badge {{ 'green' if state.started else 'red' }}" id="statusBadge"></div>
+        
+        <p class="message" id="mainMessage">{{ state.message }}</p>
+        
+        <button type="button" class="btn" id="checkBtn" onclick="runCheck()">
+            <span id="btnSpinner" class="spinner" style="display: none;"></span>
+            <span id="btnText">Sistemde Tekrar Ara</span>
+        </button>
+
+        <div class="table-title">İTÜ SİS Son 3 Duyuru</div>
+        <ul class="announcements-list" id="announcementList">
+            {% for item in state.last_3 %}
+            <li>
+                <a href="{{ item.url }}" target="_blank">🔗 {{ item.title }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        const warningBox = document.getElementById('warningBox');
+        const warningText = document.getElementById('warningText');
+        const loadingBox = document.getElementById('loadingBox');
+        const checkBtn = document.getElementById('checkBtn');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const btnText = document.getElementById('btnText');
+        
+        const mainMessage = document.getElementById('mainMessage');
+        const metaInfo = document.getElementById('metaInfo');
+        const statusBadge = document.getElementById('statusBadge');
+        const announcementList = document.getElementById('announcementList');
+
+        async function runCheck() {
+            checkBtn.disabled = true;
+            loadingBox.style.display = 'block';
+            warningBox.style.display = 'none';
+            btnSpinner.style.display = 'inline-block';
+            btnText.innerText = 'İnceleniyor...';
+
+            try {
+                const response = await fetch('/check', { method: 'POST' });
+                const data = await response.json();
+
+                // Ekranı güncelle
+                mainMessage.innerText = data.message;
+                metaInfo.innerHTML = `<strong>Son sorgulama:</strong> ${data.short_status} (Saat ${data.last_checked})`;
+                
+                if (data.started) {
+                    statusBadge.className = 'status-badge green';
+                } else {
+                    statusBadge.className = 'status-badge red';
+                }
+
+                // Duyuruları güncelle
+                if (data.last_3 && data.last_3.length > 0) {
+                    announcementList.innerHTML = data.last_3.map(item => 
+                        `<li><a href="${item.url}" target="_blank">🔗 ${item.title}</a></li>`
+                    ).join('');
+                }
+
+            } catch (err) {
+                console.error("Hata:", err);
+            } finally {
+                loadingBox.style.display = 'none';
+                btnSpinner.style.display = 'none';
+                btnText.innerText = 'Sistemde Tekrar Ara';
+            }
+        }
+
+        setInterval(async () => {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                if (data.locked) {
+                    checkBtn.disabled = true;
+                    
+                    // Yükleme yapılmıyorsa uyarıyı göster
+                    if (loadingBox.style.display !== 'block') {
+                        warningBox.style.display = 'block';
+                        if (data.is_same_user) {
+                            warningText.innerText = `Tekrar sorgulayabilmek için ${data.remaining} saniye bekleyin.`;
+                        } else {
+                            warningText.innerText = `Şu anda başka biri beni kullanıyor, lütfen ${data.remaining} saniye bekleyin!`;
+                        }
+                    }
+                } else {
+                    if (loadingBox.style.display !== 'block') {
+                        checkBtn.disabled = false;
+                        warningBox.style.display = 'none';
+                    }
+                }
+            } catch (err) {
+                console.error("Durum sorgulama hatası:", err);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
