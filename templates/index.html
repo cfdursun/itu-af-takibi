@@ -3,257 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İTÜ Af Takipçisi</title>
+    <title>İTÜ Öğrenci Affı Takipçisi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f3f4f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
-            padding: 20px;
-        }
-        .card {
-            background: #ffffff;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-            text-align: center;
-            max-width: 480px;
-            width: 100%;
             position: relative;
+            padding-bottom: 60px; /* İmza alanı için alt boşluk */
         }
-        .meta-info {
-            text-align: left;
-            font-size: 0.78rem;
-            color: #64748b;
-            background-color: #f8fafc;
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin-bottom: 1.2rem;
-            border-left: 3px solid #94a3b8;
-        }
-        .warning-box {
-            background-color: #fef3c7;
-            border: 1px solid #f59e0b;
-            color: #92400e;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 1.2rem;
-            display: none;
-        }
-        .loading-box {
-            background-color: #e0f2fe;
-            border: 1px solid #0284c7;
-            color: #0369a1;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            margin-bottom: 1.2rem;
-            display: none;
+        .main-card {
+            max-width: 650px;
+            margin: 40px auto;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: none;
         }
         .status-badge {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            padding: 8px 16px;
+            border-radius: 20px;
         }
-        .status-badge.red { background-color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
-        .status-badge.green { background-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
-        
-        .message {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #1f2937;
-            line-height: 1.4;
-            margin-bottom: 1.5rem;
-        }
-        
-        .btn {
-            background-color: #0f172a;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 1.5rem;
-            transition: all 0.2s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn:hover { background-color: #334155; }
-        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
-
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #ffffff;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            display: inline-block;
-            animation: rotation 1s linear infinite;
-        }
-
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .table-title {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-align: left;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 4px;
-        }
-
-        .announcements-list {
-            list-style: none;
-            text-align: left;
-            margin-bottom: 1rem;
-        }
-
-        .announcements-list li {
+        /* Sağ Alt İmza Stili */
+        .signature-footer {
+            position: fixed;
+            bottom: 15px;
+            right: 20px;
             font-size: 0.85rem;
-            padding: 8px 0;
-            border-bottom: 1px dashed #f1f5f9;
-        }
-
-        .announcements-list a {
-            color: #2563eb;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #6c757d;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 6px 14px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
             text-decoration: none;
+            user-select: none;
         }
-
-        .announcements-list a:hover {
-            text-decoration: underline;
+        .signature-footer:hover {
+            color: #0d6efd;
+            border-color: #0d6efd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="meta-info" id="metaInfo">
-            <strong>Son sorgulama:</strong> {{ state.short_status }} (Saat {{ state.last_checked }})
+
+    <div class="container">
+        <div class="card main-card p-4">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-dark mb-1">🎓 İTÜ Öğrenci Affı Takipçisi</h2>
+                <p class="text-muted small">İTÜ Öğrenci İşleri duyuruları yapay zekâ ile anlık taranmaktadır.</p>
+            </div>
+
+            <!-- Durum Kartı -->
+            <div class="card mb-4 border-0 {{ 'bg-success-subtle' if state.started else 'bg-light' }} text-center p-3">
+                <div class="mb-2">
+                    {% if state.started %}
+                        <span class="badge bg-success status-badge"><i class="fa-solid fa-circle-check me-1"></i> AF BAŞLADI!</span>
+                    {% else %}
+                        <span class="badge bg-secondary status-badge"><i class="fa-solid fa-clock me-1"></i> {{ state.short_status }}</span>
+                    {% endif %}
+                </div>
+                <h5 class="fw-bold text-dark mt-2 mb-1" id="ai-message">"{{ state.message }}"</h5>
+                <small class="text-muted">Son Kontrol: <span id="last-checked">{{ state.last_checked }}</span></small>
+            </div>
+
+            <!-- Kontrol Butonu -->
+            <div class="d-grid gap-2 mb-4">
+                <button id="check-btn" class="btn btn-primary btn-lg fw-semibold" onclick="triggerCheck()">
+                    <i class="fa-solid fa-arrows-rotate me-2"></i> Şimdi Kontrol Et
+                </button>
+                <div id="cooldown-timer" class="text-center text-muted small mt-1" style="display: none;">
+                    Yeniden kontrol için <b id="timer-seconds">15</b> saniye beklemelisiniz.
+                </div>
+            </div>
+
+            <!-- Son Duyurular -->
+            <div>
+                <h6 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-list-check me-1"></i> Taranan Son Duyurular</h6>
+                <ul class="list-group list-group-flush" id="announcement-list">
+                    {% for item in state.last_3 %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0">
+                            <span class="text-truncate style="max-width: 80%;">{{ item.title }}</span>
+                            <a href="{{ item.url }}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item text-muted bg-transparent px-0 small">Henüz taranmış duyuru yok.</li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
+    </div>
 
-        <div class="loading-box" id="loadingBox">
-            🔍 Bakıp geliyorum bi sn...
-        </div>
-
-        <div class="warning-box" id="warningBox">
-            ⚠️ <span id="warningText">Lütfen bekleyin...</span>
-        </div>
-
-        <div class="status-badge {{ 'green' if state.started else 'red' }}" id="statusBadge"></div>
-        
-        <p class="message" id="mainMessage">{{ state.message }}</p>
-        
-        <button type="button" class="btn" id="checkBtn" onclick="runCheck()">
-            <span id="btnSpinner" class="spinner" style="display: none;"></span>
-            <span id="btnText">Sistemde Tekrar Ara</span>
-        </button>
-
-        <div class="table-title">İTÜ SİS Son 3 Duyuru</div>
-        <ul class="announcements-list" id="announcementList">
-            {% for item in state.last_3 %}
-            <li>
-                <a href="{{ item.url }}" target="_blank">🔗 {{ item.title }}</a>
-            </li>
-            {% endfor %}
-        </ul>
+    <!-- SAĞ ALT İMZA -->
+    <div class="signature-footer">
+        BY CFD
     </div>
 
     <script>
-        const warningBox = document.getElementById('warningBox');
-        const warningText = document.getElementById('warningText');
-        const loadingBox = document.getElementById('loadingBox');
-        const checkBtn = document.getElementById('checkBtn');
-        const btnSpinner = document.getElementById('btnSpinner');
-        const btnText = document.getElementById('btnText');
-        
-        const mainMessage = document.getElementById('mainMessage');
-        const metaInfo = document.getElementById('metaInfo');
-        const statusBadge = document.getElementById('statusBadge');
-        const announcementList = document.getElementById('announcementList');
+        let checkLock = false;
 
-        async function runCheck() {
-            checkBtn.disabled = true;
-            loadingBox.style.display = 'block';
-            warningBox.style.display = 'none';
-            btnSpinner.style.display = 'inline-block';
-            btnText.innerText = 'İnceleniyor...';
+        function updateTimer() {
+            fetch('/status')
+                .then(res => res.json())
+                .then(data => {
+                    const btn = document.getElementById('check-btn');
+                    const timerDiv = document.getElementById('cooldown-timer');
+                    const timerSec = document.getElementById('timer-seconds');
 
-            try {
-                const response = await fetch('/check', { method: 'POST' });
-                const data = await response.json();
-
-                // Ekranı güncelle
-                mainMessage.innerText = data.message;
-                metaInfo.innerHTML = `<strong>Son sorgulama:</strong> ${data.short_status} (Saat ${data.last_checked})`;
-                
-                if (data.started) {
-                    statusBadge.className = 'status-badge green';
-                } else {
-                    statusBadge.className = 'status-badge red';
-                }
-
-                // Duyuruları güncelle
-                if (data.last_3 && data.last_3.length > 0) {
-                    announcementList.innerHTML = data.last_3.map(item => 
-                        `<li><a href="${item.url}" target="_blank">🔗 ${item.title}</a></li>`
-                    ).join('');
-                }
-
-            } catch (err) {
-                console.error("Hata:", err);
-            } finally {
-                loadingBox.style.display = 'none';
-                btnSpinner.style.display = 'none';
-                btnText.innerText = 'Sistemde Tekrar Ara';
-            }
+                    if (data.locked) {
+                        btn.disabled = true;
+                        timerDiv.style.display = 'block';
+                        timerSec.innerText = data.remaining;
+                    } else {
+                        btn.disabled = false;
+                        timerDiv.style.display = 'none';
+                    }
+                });
         }
 
-        setInterval(async () => {
-            try {
-                const response = await fetch('/status');
-                const data = await response.json();
+        function triggerCheck() {
+            const btn = document.getElementById('check-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Taranıyor...';
 
-                if (data.locked) {
-                    checkBtn.disabled = true;
-                    
-                    // Yükleme yapılmıyorsa uyarıyı göster
-                    if (loadingBox.style.display !== 'block') {
-                        warningBox.style.display = 'block';
-                        if (data.is_same_user) {
-                            warningText.innerText = `Tekrar sorgulayabilmek için ${data.remaining} saniye bekleyin.`;
-                        } else {
-                            warningText.innerText = `Şu anda başka biri beni kullanıyor, lütfen ${data.remaining} saniye bekleyin!`;
-                        }
-                    }
-                } else {
-                    if (loadingBox.style.display !== 'block') {
-                        checkBtn.disabled = false;
-                        warningBox.style.display = 'none';
-                    }
-                }
-            } catch (err) {
-                console.error("Durum sorgulama hatası:", err);
-            }
-        }, 1000);
+            fetch('/check', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    location.reload();
+                })
+                .catch(err => {
+                    console.error(err);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate me-2"></i> Şimdi Kontrol Et';
+                });
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
     </script>
 </body>
 </html>
