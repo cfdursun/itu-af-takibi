@@ -1,24 +1,151 @@
-.signature-footer {
-    position: fixed;
-    bottom: 20px;
-    right: 25px;
-    font-size: 1.05rem; /* Biraz daha büyütüldü */
-    font-weight: 800; /* Daha kalın ve belirgin yapıldı */
-    letter-spacing: 2px;
-    color: #dc3545; /* Kırmızı renk */
-    background: #ffffff;
-    padding: 8px 18px; /* Kapsayıcı biraz daha belirginleşti */
-    border-radius: 25px;
-    border: 1.5px solid #dc3545; /* Kırmızı ince çerçeve */
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
-    transition: all 0.3s ease;
-    user-select: none;
-    z-index: 1000;
-}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İTÜ Öğrenci Affı Takipçisi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 60px;
+        }
+        .main-card {
+            max-width: 650px;
+            margin: 40px auto;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: none;
+        }
+        .status-badge {
+            font-size: 1.1rem;
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+        .signature-footer {
+            position: fixed;
+            bottom: 20px;
+            right: 25px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #dc3545;
+            background: #ffffff;
+            padding: 8px 18px;
+            border-radius: 25px;
+            border: 1.5px solid #dc3545;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+            transition: all 0.3s ease;
+            user-select: none;
+            z-index: 1000;
+        }
+        .signature-footer:hover {
+            background: #dc3545;
+            color: #ffffff;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(220, 53, 69, 0.3);
+        }
+    </style>
+</head>
+<body>
 
-.signature-footer:hover {
-    background: #dc3545;
-    color: #ffffff;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.3);
-}
+    <div class="container">
+        <div class="card main-card p-4">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-dark mb-1">🎓 İTÜ Öğrenci Affı Takipçisi</h2>
+                <p class="text-muted small">İTÜ Öğrenci İşleri duyuruları yapay zekâ ile anlık taranmaktadır.</p>
+            </div>
+
+            <!-- Durum Kartı -->
+            <div class="card mb-4 border-0 {{ 'bg-success-subtle' if state.started else 'bg-light' }} text-center p-3">
+                <div class="mb-2">
+                    {% if state.started %}
+                        <span class="badge bg-success status-badge"><i class="fa-solid fa-circle-check me-1"></i> AF BAŞLADI!</span>
+                    {% else %}
+                        <span class="badge bg-secondary status-badge"><i class="fa-solid fa-clock me-1"></i> {{ state.short_status }}</span>
+                    {% endif %}
+                </div>
+                <h5 class="fw-bold text-dark mt-2 mb-1" id="ai-message">"{{ state.message }}"</h5>
+                <small class="text-muted">Son Kontrol: <span id="last-checked">{{ state.last_checked }}</span></small>
+            </div>
+
+            <!-- Kontrol Butonu -->
+            <div class="d-grid gap-2 mb-4">
+                <button id="check-btn" class="btn btn-primary btn-lg fw-semibold" onclick="triggerCheck()">
+                    <i class="fa-solid fa-arrows-rotate me-2"></i> Şimdi Kontrol Et
+                </button>
+                <div id="cooldown-timer" class="text-center text-muted small mt-1" style="display: none;">
+                    Yeniden kontrol için <b id="timer-seconds">15</b> saniye beklemelisiniz.
+                </div>
+            </div>
+
+            <!-- Son Duyurular -->
+            <div>
+                <h6 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-list-check me-1"></i> Taranan Son Duyurular</h6>
+                <ul class="list-group list-group-flush" id="announcement-list">
+                    {% for item in state.last_3 %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0">
+                            <span class="text-truncate" style="max-width: 80%;">{{ item.title }}</span>
+                            <a href="{{ item.url }}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item text-muted bg-transparent px-0 small">Henüz taranmış duyuru yok.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAĞ ALT İMZA -->
+    <div class="signature-footer">
+        BY CFD
+    </div>
+
+    <script>
+        let checkLock = false;
+
+        function updateTimer() {
+            fetch('/status')
+                .then(res => res.json())
+                .then(data => {
+                    const btn = document.getElementById('check-btn');
+                    const timerDiv = document.getElementById('cooldown-timer');
+                    const timerSec = document.getElementById('timer-seconds');
+
+                    if (data.locked) {
+                        btn.disabled = true;
+                        timerDiv.style.display = 'block';
+                        timerSec.innerText = data.remaining;
+                    } else {
+                        btn.disabled = false;
+                        timerDiv.style.display = 'none';
+                    }
+                });
+        }
+
+        function triggerCheck() {
+            const btn = document.getElementById('check-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Taranıyor...';
+
+            fetch('/check', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    location.reload();
+                })
+                .catch(err => {
+                    console.error(err);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate me-2"></i> Şimdi Kontrol Et';
+                });
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>
+</body>
+</html>
