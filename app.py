@@ -3,7 +3,7 @@ from flask import Flask, render_template, redirect, url_for, jsonify, session
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
-from google import genai
+import google.generativeai as genai
 import json
 import time
 import uuid
@@ -11,15 +11,15 @@ import uuid
 app = Flask(__name__)
 app.secret_key = "itu_af_takip_secret_key"
 
-# API Anahtarı doğrudan kodda durmaz, sunucudaki gizli değişkenden okunur
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 COOLDOWN_SECONDS = 15
 last_request_timestamp = 0
 last_request_user = None
 
-MODEL_NAME = "gemini-3.5-flash-lite"
+MODEL_NAME = "gemini-1.5-flash"
 
 NAV_BLACKLIST = [
     "öbs giriş", "itü anasayfa", "ninova", "program bilgi paketi", 
@@ -39,7 +39,7 @@ site_state = {
 def analyze_announcements_with_ai():
     global site_state, last_request_timestamp, last_request_user
     
-    if not client:
+    if not GEMINI_API_KEY:
         site_state["started"] = False
         site_state["message"] = "API Anahtarı bulunamadı (GEMINI_API_KEY tanımlanmamış)."
         site_state["short_status"] = "API Key Eksik"
@@ -57,7 +57,6 @@ def analyze_announcements_with_ai():
 
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, "html.parser")
-            
             announcements = []
 
             for li in soup.find_all("li"):
@@ -107,11 +106,11 @@ def analyze_announcements_with_ai():
             ÜSLUP VE KİŞİLİK (ÇOK ÖNEMLİ):
             - Çok samimi, esprili ve sokak ağzıyla eğlenceli bir Türkçe kullan.
             - KESİNLİKLE "kanka", "kankam", "dostum", "bro" gibi kelimeleri KULLANMA.
-            - Eğer BAŞLAMADIYSA: Abartılı ve komik yeminler et. (Örn: "Vallah billah her yere baktım daha tık yok!", "İki tokenim önüme aksın ki af başvurusu başlamamış!", "Kuran çarpsın siteyi altüst ettim henüz başlamamış yeminle!").
-            - Eğer BAŞLADIYSA: Müjde verir gibi, ashırı heyecanlı ve panik/sevinç havasında yaz! (Örn: "MÜJDEEE! Vallahi başladı koşş çabuk başvur!", "Hadi gözün aydın af açıldı, durma koşşş!").
+            - Eğer BAŞLAMADIYSA: Abartılı ve komik yeminler et.
+            - Eğer BAŞLADIYSA: Müjde verir gibi, aşırı heyecanlı ve panik/sevinç havasında yaz!
             - Yalnızca tek cümlelik, vurucu ve komik bir mesaj yaz.
 
-            Format:
+            Yanıtını SADECE aşağıdaki JSON formatında ver:
             {{
                 "durum": "BAŞLADI" veya "BAŞLAMADI",
                 "ozet": "Yapay zekanın ürettiği esprili tek cümle"
@@ -120,10 +119,10 @@ def analyze_announcements_with_ai():
 
             try:
                 print(f"--> [API İSTEĞİ] {MODEL_NAME} deneniyor...")
-                ai_response = client.models.generate_content(
-                    model=MODEL_NAME,
-                    contents=prompt,
-                    config={"response_mime_type": "application/json"}
+                model = genai.GenerativeModel(MODEL_NAME)
+                ai_response = model.generate_content(
+                    prompt,
+                    generation_config={"response_mime_type": "application/json"}
                 )
                 result = json.loads(ai_response.text)
                 is_started = (result.get("durum") == "BAŞLADI")
