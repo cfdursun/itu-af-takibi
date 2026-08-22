@@ -3,7 +3,7 @@ from flask import Flask, render_template, redirect, url_for, jsonify, session
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
-import google.generativeai as genai
+from google import genai
 import json
 import time
 import uuid
@@ -11,15 +11,14 @@ import uuid
 app = Flask(__name__)
 app.secret_key = "itu_af_takip_secret_key"
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+# Çevre değişkeninden boşluklar temizlenerek alınıyor
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 
 COOLDOWN_SECONDS = 15
 last_request_timestamp = 0
 last_request_user = None
 
-MODEL_NAME = "gemini-1.5-flash"
+MODEL_NAME = "gemini-3.5-flash-lite"
 
 NAV_BLACKLIST = [
     "öbs giriş", "itü anasayfa", "ninova", "program bilgi paketi", 
@@ -44,6 +43,9 @@ def analyze_announcements_with_ai():
         site_state["message"] = "API Anahtarı bulunamadı (GEMINI_API_KEY tanımlanmamış)."
         site_state["short_status"] = "API Key Eksik"
         return
+
+    # Client her istekte doğru API Key ile başlatılır
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     list_url = "https://www.sis.itu.edu.tr/TR/duyurular/duyurular.php"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
@@ -110,7 +112,7 @@ def analyze_announcements_with_ai():
             - Eğer BAŞLADIYSA: Müjde verir gibi, aşırı heyecanlı ve panik/sevinç havasında yaz!
             - Yalnızca tek cümlelik, vurucu ve komik bir mesaj yaz.
 
-            Yanıtını SADECE aşağıdaki JSON formatında ver:
+            Format:
             {{
                 "durum": "BAŞLADI" veya "BAŞLAMADI",
                 "ozet": "Yapay zekanın ürettiği esprili tek cümle"
@@ -119,10 +121,10 @@ def analyze_announcements_with_ai():
 
             try:
                 print(f"--> [API İSTEĞİ] {MODEL_NAME} deneniyor...")
-                model = genai.GenerativeModel(MODEL_NAME)
-                ai_response = model.generate_content(
-                    prompt,
-                    generation_config={"response_mime_type": "application/json"}
+                ai_response = client.models.generate_content(
+                    model=MODEL_NAME,
+                    contents=prompt,
+                    config={"response_mime_type": "application/json"}
                 )
                 result = json.loads(ai_response.text)
                 is_started = (result.get("durum") == "BAŞLADI")
