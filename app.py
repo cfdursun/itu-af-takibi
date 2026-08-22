@@ -3,7 +3,9 @@ from flask import Flask, render_template, redirect, url_for, jsonify, session
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
+import pytz
 from google import genai
+from google.genai import types
 import json
 import time
 import uuid
@@ -11,14 +13,13 @@ import uuid
 app = Flask(__name__)
 app.secret_key = "itu_af_takip_secret_key"
 
-# Çevre değişkeninden boşluklar temizlenerek alınıyor
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 
 COOLDOWN_SECONDS = 15
 last_request_timestamp = 0
 last_request_user = None
 
-MODEL_NAME = "gemini-3.5-flash-lite"
+MODEL_NAME = "gemini-2.5-flash"
 
 NAV_BLACKLIST = [
     "öbs giriş", "itü anasayfa", "ninova", "program bilgi paketi", 
@@ -44,7 +45,6 @@ def analyze_announcements_with_ai():
         site_state["short_status"] = "API Key Eksik"
         return
 
-    # Client her istekte doğru API Key ile başlatılır
     client = genai.Client(api_key=GEMINI_API_KEY)
 
     list_url = "https://www.sis.itu.edu.tr/TR/duyurular/duyurular.php"
@@ -124,7 +124,9 @@ def analyze_announcements_with_ai():
                 ai_response = client.models.generate_content(
                     model=MODEL_NAME,
                     contents=prompt,
-                    config={"response_mime_type": "application/json"}
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json"
+                    )
                 )
                 result = json.loads(ai_response.text)
                 is_started = (result.get("durum") == "BAŞLADI")
@@ -142,7 +144,10 @@ def analyze_announcements_with_ai():
                 site_state["short_status"] = "API Hatası"
 
             site_state["last_3"] = latest_3
-            site_state["last_checked"] = datetime.now().strftime("%H:%M:%S")
+            
+            # Türkiye saat dilimine (UTC+3) göre saati alma
+            turkey_tz = pytz.timezone("Europe/Istanbul")
+            site_state["last_checked"] = datetime.now(turkey_tz).strftime("%H:%M:%S")
 
     except Exception as e:
         print(f"--> [KRİTİK HATA] {e}")

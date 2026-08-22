@@ -1,5 +1,6 @@
 Flask
 requests
 beautifulsoup4
-google-genai
+google-genai>=0.1.1
 gunicorn
+pytz
